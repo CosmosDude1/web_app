@@ -36,27 +36,46 @@ Bu proje, ekiplerin veya bireysel kullanıcıların görev ve projelerini dijita
    - GitHub'a bağlandı
    - .gitignore dosyası oluşturuldu
 
+2. **Backend - ASP.NET Core 8.0 Web API**
+   - ✅ Proje oluşturuldu ve yapılandırıldı
+   - ✅ NuGet paketleri eklendi (EF Core, Identity, JWT, MailKit, Swagger)
+   - ✅ Entity Framework modelleri oluşturuldu (ApplicationUser, Project, Task, TaskAssignment, Attachment, Notification)
+   - ✅ ApplicationDbContext oluşturuldu
+   - ✅ ASP.NET Identity yapılandırıldı
+   - ✅ JWT Authentication yapılandırıldı
+   - ✅ API Controller'ları oluşturuldu (Auth, Projects, Tasks, Dashboard, Calendar, Attachments)
+   - ✅ Servisler oluşturuldu (EmailService, NotificationService, FileService)
+   - ✅ Swagger yapılandırıldı
+   - ✅ Connection string yapılandırıldı (SQL Server Express)
+   - ✅ CORS yapılandırıldı
+   - ✅ Rol yönetimi eklendi (Admin, Yönetici, User)
+
+3. **Frontend - React**
+   - ✅ React projesi oluşturuldu
+   - ✅ Gerekli npm paketleri eklendi (axios, react-router-dom, chart.js, react-chartjs-2, date-fns)
+
 ### 🔄 Devam Eden Kısımlar
 
-- Proje kurulumu aşamasında
+- Frontend UI bileşenleri oluşturuluyor
+- Veritabanı migration'ları uygulanacak
 
 ### ⏳ Yapılacaklar
 
 #### Backend
-- [ ] ASP.NET Core 8.0 Web API projesi oluşturma
-- [ ] NuGet paketlerinin eklenmesi
-- [ ] Entity Framework modelleri (ApplicationUser, Project, Task, TaskAssignment, Attachment, Notification)
-- [ ] ApplicationDbContext oluşturma
-- [ ] SQL Server bağlantısı ve migration'lar
-- [ ] ASP.NET Identity yapılandırması
-- [ ] JWT Authentication yapılandırması
-- [ ] API Controller'ları (Auth, Projects, Tasks, Dashboard, Calendar, Attachments)
-- [ ] Servisler (EmailService, NotificationService, FileService)
-- [ ] Swagger yapılandırması
+- [x] ASP.NET Core 8.0 Web API projesi oluşturma
+- [x] NuGet paketlerinin eklenmesi
+- [x] Entity Framework modelleri (ApplicationUser, Project, Task, TaskAssignment, Attachment, Notification)
+- [x] ApplicationDbContext oluşturma
+- [ ] SQL Server bağlantısı ve migration'lar (EF Tools sorunu var, düzeltilecek)
+- [x] ASP.NET Identity yapılandırması
+- [x] JWT Authentication yapılandırması
+- [x] API Controller'ları (Auth, Projects, Tasks, Dashboard, Calendar, Attachments)
+- [x] Servisler (EmailService, NotificationService, FileService)
+- [x] Swagger yapılandırması
 
 #### Frontend
-- [ ] React projesi oluşturma
-- [ ] npm paketlerinin eklenmesi
+- [x] React projesi oluşturma
+- [x] npm paketlerinin eklenmesi
 - [ ] Temel UI tasarımı
 - [ ] Authentication (Login/Register)
 - [ ] Dashboard sayfası
@@ -105,6 +124,12 @@ Bu proje, ekiplerin veya bireysel kullanıcıların görev ve projelerini dijita
 
 ## Son Güncelleme
 
-**Tarih:** 2025-01-XX  
-**Durum:** Proje başlangıç aşamasında
+**Tarih:** 2025-01-23  
+**Durum:** Backend tamamlandı, Frontend kurulumu yapıldı. Migration'lar uygulanacak ve Frontend UI geliştirilecek.
+
+## Notlar
+
+- EF Tools migration sorunu var, düzeltilecek
+- Veritabanı migration'ları uygulanacak
+- Frontend UI bileşenleri oluşturulacak
 
