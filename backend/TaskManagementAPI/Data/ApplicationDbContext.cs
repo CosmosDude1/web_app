@@ -107,7 +107,7 @@ namespace TaskManagementAPI.Data
                 entity.HasOne(e => e.Task)
                     .WithMany()
                     .HasForeignKey(e => e.TaskId)
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .OnDelete(DeleteBehavior.NoAction);
                 
                 entity.HasOne(e => e.Project)
                     .WithMany()

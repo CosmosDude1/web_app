@@ -72,7 +72,7 @@ Bu proje, ekiplerin veya bireysel kullanıcıların görev ve projelerini dijita
 - [x] NuGet paketlerinin eklenmesi
 - [x] Entity Framework modelleri (ApplicationUser, Project, Task, TaskAssignment, Attachment, Notification)
 - [x] ApplicationDbContext oluşturma
-- [ ] SQL Server bağlantısı ve migration'lar (EF Tools sorunu var, düzeltilecek)
+- [x] SQL Server bağlantısı ve migration'lar (TAMAMLANDI - Tüm tablolar oluşturuldu)
 - [x] ASP.NET Identity yapılandırması
 - [x] JWT Authentication yapılandırması
 - [x] API Controller'ları (Auth, Projects, Tasks, Dashboard, Calendar, Attachments)
@@ -107,10 +107,10 @@ Bu proje, ekiplerin veya bireysel kullanıcıların görev ve projelerini dijita
 - [ ] Proje ve görev listeleri
 
 ### Veritabanı
-- [ ] SQL Server bağlantısı kuruldu
-- [ ] Migration'lar uygulandı
-- [ ] Tablolar oluşturuldu
-- [ ] Bağlantı test edildi
+- [x] SQL Server bağlantısı kuruldu (Windows Authentication)
+- [x] Migration'lar uygulandı
+- [x] Tablolar oluşturuldu (AspNetUsers, AspNetRoles, Projects, Tasks, TaskAssignments, Attachments, Notifications)
+- [x] Bağlantı test edildi
 
 ### API
 - [ ] En az bir endpoint çalışıyor
@@ -149,8 +149,8 @@ Bu proje, ekiplerin veya bireysel kullanıcıların görev ve projelerini dijita
 
 ## Notlar
 
-- EF Tools migration sorunu var, düzeltilecek
-- Veritabanı migration'ları uygulanacak (EF Tools düzeltildikten sonra)
+- ✅ EF Tools migration sorunu çözüldü
+- ✅ Veritabanı migration'ları başarıyla uygulandı
 - Proje ve Görev yönetimi sayfaları oluşturulacak
 - Takvim görünümü eklenecek
 - Dosya yükleme UI bileşenleri eklenecek
