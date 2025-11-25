@@ -55,7 +55,17 @@ namespace TaskManagementAPI.Controllers
             }
 
             // Assign default role
-            await _userManager.AddToRoleAsync(user, "User");
+            try
+            {
+                if (await _roleManager.RoleExistsAsync("User"))
+                {
+                    await _userManager.AddToRoleAsync(user, "User");
+                }
+            }
+            catch
+            {
+                // Role assignment failed, but user is created
+            }
 
             var token = GenerateJwtToken(user);
 

@@ -136,18 +136,21 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Create roles on startup
-using (var scope = app.Services.CreateScope())
+_ = System.Threading.Tasks.Task.Run(async () =>
 {
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var roles = new[] { "Admin", "Yönetici", "User" };
-    
-    foreach (var role in roles)
+    using (var scope = app.Services.CreateScope())
     {
-        if (!await roleManager.RoleExistsAsync(role))
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+        var roles = new[] { "Admin", "Yönetici", "User" };
+        
+        foreach (var role in roles)
         {
-            await roleManager.CreateAsync(new IdentityRole(role));
+            if (!await roleManager.RoleExistsAsync(role))
+            {
+                await roleManager.CreateAsync(new IdentityRole(role));
+            }
         }
     }
-}
+});
 
 app.Run();

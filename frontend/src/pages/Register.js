@@ -25,7 +25,25 @@ const Register = () => {
       await register(formData);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Kayıt başarısız');
+      console.error('Register error:', err);
+      if (err.response?.data) {
+        // Backend'den gelen hata mesajlarını göster
+        if (err.response.data.errors) {
+          // Validation hataları
+          const errorMessages = Object.values(err.response.data.errors).flat().join(', ');
+          setError(errorMessages || 'Kayıt başarısız');
+        } else if (err.response.data.message) {
+          setError(err.response.data.message);
+        } else if (Array.isArray(err.response.data)) {
+          // Identity hataları
+          const errorMessages = err.response.data.map(e => e.description || e.code).join(', ');
+          setError(errorMessages || 'Kayıt başarısız');
+        } else {
+          setError('Kayıt başarısız');
+        }
+      } else {
+        setError(err.message || 'Kayıt başarısız');
+      }
     }
   };
 
