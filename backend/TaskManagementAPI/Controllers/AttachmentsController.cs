@@ -71,7 +71,25 @@ namespace TaskManagementAPI.Controllers
             return Ok(new { Id = attachment.Id, FileName = attachment.FileName });
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("task/{taskId}")]
+        public async Task<ActionResult<IEnumerable<object>>> GetAttachmentsByTask(int taskId)
+        {
+            var attachments = await _context.Attachments
+                .Where(a => a.TaskId == taskId)
+                .Select(a => new
+                {
+                    Id = a.Id,
+                    FileName = a.FileName,
+                    FileSize = a.FileSize,
+                    ContentType = a.ContentType,
+                    UploadedAt = a.UploadedAt
+                })
+                .ToListAsync();
+
+            return Ok(attachments);
+        }
+
+        [HttpGet("{id}/download")]
         public async Task<IActionResult> DownloadAttachment(int id)
         {
             var attachment = await _context.Attachments.FindAsync(id);

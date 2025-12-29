@@ -85,11 +85,12 @@ Bu proje, ekiplerin veya bireysel kullanıcıların görev ve projelerini dijita
 - [x] Temel UI tasarımı (Login, Register, Dashboard)
 - [x] Authentication (Login/Register)
 - [x] Dashboard sayfası
-- [ ] Proje yönetimi sayfaları
-- [ ] Görev yönetimi sayfaları
-- [ ] Takvim görünümü
+- [x] Proje yönetimi sayfaları (Liste, Detay, Oluşturma/Düzenleme)
+- [x] Görev yönetimi sayfaları (Liste, Detay, Oluşturma/Düzenleme)
+- [x] Takvim görünümü
 - [x] Chart.js entegrasyonu (Dashboard'da)
-- [ ] Dosya yükleme bileşenleri
+- [x] Dosya yükleme bileşenleri
+- [x] Navigation bar/menu
 - [x] API entegrasyonu (Servisler oluşturuldu)
 
 #### Dokümantasyon
@@ -101,10 +102,15 @@ Bu proje, ekiplerin veya bireysel kullanıcıların görev ve projelerini dijita
 ## Gösterim İçin Gereksinimler
 
 ### Tasarım
-- [ ] Temel UI tasarımı tamamlandı
-- [ ] Login/Register sayfaları
-- [ ] Dashboard görünümü
-- [ ] Proje ve görev listeleri
+- [x] Temel UI tasarımı tamamlandı
+- [x] Login/Register sayfaları
+- [x] Dashboard görünümü
+- [x] Proje ve görev listeleri
+- [x] Navigation bar/menu
+- [x] Proje detay ve form sayfaları
+- [x] Görev detay ve form sayfaları
+- [x] Takvim görünümü
+- [x] Dosya yükleme UI
 
 ### Veritabanı
 - [x] SQL Server bağlantısı kuruldu (Windows Authentication)
@@ -113,9 +119,9 @@ Bu proje, ekiplerin veya bireysel kullanıcıların görev ve projelerini dijita
 - [x] Bağlantı test edildi
 
 ### API
-- [ ] En az bir endpoint çalışıyor
-- [ ] Swagger'da test edilebilir
-- [ ] Veri çekme/gönderme gösterilebilir
+- [x] Tüm endpoint'ler çalışıyor
+- [x] Swagger'da test edilebilir
+- [x] Veri çekme/gönderme gösterilebilir (Register/Login, Projeler, Görevler, Takvim, Dosyalar)
 
 ---
 
@@ -131,7 +137,7 @@ Bu proje, ekiplerin veya bireysel kullanıcıların görev ve projelerini dijita
 ## Son Güncelleme
 
 **Tarih:** 2025-01-23  
-**Durum:** Backend ve Frontend temel yapısı tamamlandı. Migration'lar uygulanacak ve kalan Frontend sayfaları geliştirilecek.
+**Durum:** Proje tamamlandı! Tüm frontend sayfaları, backend endpoint'leri ve özellikler hazır. Gösterim için hazır.
 
 ## Tamamlanan Özellikler
 
@@ -144,14 +150,34 @@ Bu proje, ekiplerin veya bireysel kullanıcıların görev ve projelerini dijita
 ### Frontend
 - ✅ Login/Register sayfaları çalışıyor
 - ✅ Dashboard sayfası ve grafikler hazır
+- ✅ Proje yönetimi sayfaları (Liste, Detay, Oluşturma/Düzenleme)
+- ✅ Görev yönetimi sayfaları (Liste, Detay, Oluşturma/Düzenleme)
+- ✅ Takvim görünümü
+- ✅ Dosya yükleme ve indirme
+- ✅ Navigation bar/menu
 - ✅ API entegrasyonu tamamlandı
 - ✅ Protected routes çalışıyor
+
+## Yeni Eklenen Özellikler
+
+### Frontend Sayfaları
+1. **Navigation Bar** - Tüm sayfalara erişim için menü
+2. **Projeler Sayfası** - Proje listesi, kart görünümü, durum filtreleme
+3. **Proje Detay Sayfası** - Proje bilgileri, istatistikler, görev listesi
+4. **Proje Form Sayfası** - Proje oluşturma ve düzenleme
+5. **Görevler Sayfası** - Görev listesi, durum ve öncelik filtreleme
+6. **Görev Detay Sayfası** - Görev bilgileri, durum güncelleme, dosya yönetimi
+7. **Görev Form Sayfası** - Görev oluşturma ve düzenleme
+8. **Takvim Sayfası** - Aylık takvim görünümü, tarih bazlı görev listesi
+
+### Backend Endpoint'leri
+- ✅ AttachmentsController'a task'a göre dosya listesi endpoint'i eklendi
 
 ## Notlar
 
 - ✅ EF Tools migration sorunu çözüldü
 - ✅ Veritabanı migration'ları başarıyla uygulandı
-- Proje ve Görev yönetimi sayfaları oluşturulacak
-- Takvim görünümü eklenecek
-- Dosya yükleme UI bileşenleri eklenecek
+- ✅ Tüm frontend sayfaları tamamlandı
+- ✅ Dosya yükleme/indirme/silme özellikleri çalışıyor
+- ✅ Proje ve görev CRUD işlemleri tamamlandı
 
