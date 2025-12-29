@@ -15,6 +15,7 @@ namespace TaskManagementAPI.DTOs
         public string ProjectName { get; set; } = string.Empty;
         public string CreatedByUserName { get; set; } = string.Empty;
         public List<string> AssignedToUserNames { get; set; } = new List<string>();
+        public List<string> AssignedToUserIds { get; set; } = new List<string>();
     }
 
     public class CreateTaskDto
@@ -36,6 +37,7 @@ namespace TaskManagementAPI.DTOs
         public DateTime? DueDate { get; set; }
         public Models.TaskStatus Status { get; set; }
         public Models.TaskPriority Priority { get; set; }
+        public List<string> AssignedToUserIds { get; set; } = new List<string>();
     }
 }
 

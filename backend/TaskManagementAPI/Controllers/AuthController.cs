@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -147,6 +148,24 @@ namespace TaskManagementAPI.Controllers
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        [HttpGet("users")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<object>>> GetUsers()
+        {
+            var users = _userManager.Users
+                .Select(u => new
+                {
+                    Id = u.Id,
+                    FirstName = u.FirstName,
+                    LastName = u.LastName,
+                    Email = u.Email,
+                    FullName = $"{u.FirstName} {u.LastName}"
+                })
+                .ToList();
+
+            return Ok(users);
         }
     }
 }

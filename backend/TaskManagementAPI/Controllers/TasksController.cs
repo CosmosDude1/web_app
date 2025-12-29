@@ -42,7 +42,8 @@ namespace TaskManagementAPI.Controllers
                     ProjectId = t.ProjectId,
                     ProjectName = t.Project.Name,
                     CreatedByUserName = $"{t.CreatedByUser.FirstName} {t.CreatedByUser.LastName}",
-                    AssignedToUserNames = t.Assignments.Select(a => $"{a.AssignedToUser.FirstName} {a.AssignedToUser.LastName}").ToList()
+                    AssignedToUserNames = t.Assignments.Select(a => $"{a.AssignedToUser.FirstName} {a.AssignedToUser.LastName}").ToList(),
+                    AssignedToUserIds = t.Assignments.Select(a => a.AssignedToUserId).ToList()
                 })
                 .ToListAsync();
 
@@ -76,7 +77,8 @@ namespace TaskManagementAPI.Controllers
                 ProjectId = task.ProjectId,
                 ProjectName = task.Project.Name,
                 CreatedByUserName = $"{task.CreatedByUser.FirstName} {task.CreatedByUser.LastName}",
-                AssignedToUserNames = task.Assignments.Select(a => $"{a.AssignedToUser.FirstName} {a.AssignedToUser.LastName}").ToList()
+                AssignedToUserNames = task.Assignments.Select(a => $"{a.AssignedToUser.FirstName} {a.AssignedToUser.LastName}").ToList(),
+                AssignedToUserIds = task.Assignments.Select(a => a.AssignedToUserId).ToList()
             };
 
             return Ok(taskDto);
@@ -140,7 +142,8 @@ namespace TaskManagementAPI.Controllers
                 ProjectId = createdTask.ProjectId,
                 ProjectName = createdTask.Project.Name,
                 CreatedByUserName = $"{createdTask.CreatedByUser.FirstName} {createdTask.CreatedByUser.LastName}",
-                AssignedToUserNames = createdTask.Assignments.Select(a => $"{a.AssignedToUser.FirstName} {a.AssignedToUser.LastName}").ToList()
+                AssignedToUserNames = createdTask.Assignments.Select(a => $"{a.AssignedToUser.FirstName} {a.AssignedToUser.LastName}").ToList(),
+                AssignedToUserIds = createdTask.Assignments.Select(a => a.AssignedToUserId).ToList()
             };
 
             return CreatedAtAction(nameof(GetTask), new { id = task.Id }, taskDto);
@@ -149,7 +152,10 @@ namespace TaskManagementAPI.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateTask(int id, [FromBody] UpdateTaskDto dto)
         {
-            var task = await _context.Tasks.FindAsync(id);
+            var task = await _context.Tasks
+                .Include(t => t.Assignments)
+                .FirstOrDefaultAsync(t => t.Id == id);
+            
             if (task == null)
             {
                 return NotFound();
@@ -162,6 +168,21 @@ namespace TaskManagementAPI.Controllers
             task.Status = dto.Status;
             task.Priority = dto.Priority;
             task.UpdatedAt = DateTime.UtcNow;
+
+            // Update user assignments
+            var existingAssignments = task.Assignments.ToList();
+            _context.TaskAssignments.RemoveRange(existingAssignments);
+
+            foreach (var assignedUserId in dto.AssignedToUserIds)
+            {
+                var assignment = new TaskAssignment
+                {
+                    TaskId = task.Id,
+                    AssignedToUserId = assignedUserId,
+                    AssignedAt = DateTime.UtcNow
+                };
+                _context.TaskAssignments.Add(assignment);
+            }
 
             await _context.SaveChangesAsync();
 

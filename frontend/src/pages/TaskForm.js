@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { taskService } from '../services/taskService';
 import { projectService } from '../services/projectService';
+import { userService } from '../services/userService';
 import Navbar from '../components/Navbar';
 
 const TaskForm = () => {
@@ -12,6 +13,7 @@ const TaskForm = () => {
   const projectIdFromQuery = searchParams.get('projectId');
 
   const [projects, setProjects] = useState([]);
+  const [users, setUsers] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -25,15 +27,19 @@ const TaskForm = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchProjects = async () => {
+    const fetchData = async () => {
       try {
-        const data = await projectService.getAll();
-        setProjects(data);
+        const [projectsData, usersData] = await Promise.all([
+          projectService.getAll(),
+          userService.getAll()
+        ]);
+        setProjects(projectsData);
+        setUsers(usersData);
       } catch (err) {
-        console.error('Projeler yüklenemedi:', err);
+        console.error('Veri yüklenemedi:', err);
       }
     };
-    fetchProjects();
+    fetchData();
 
     if (isEdit) {
       const fetchTask = async () => {
@@ -46,7 +52,7 @@ const TaskForm = () => {
             dueDate: task.dueDate ? task.dueDate.split('T')[0] : '',
             priority: task.priority,
             projectId: task.projectId,
-            assignedToUserIds: []
+            assignedToUserIds: task.assignedToUserIds || []
           });
         } catch (err) {
           setError('Görev yüklenirken hata oluştu');
@@ -58,6 +64,17 @@ const TaskForm = () => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleUserToggle = (userId) => {
+    setFormData(prev => {
+      const currentIds = prev.assignedToUserIds || [];
+      if (currentIds.includes(userId)) {
+        return { ...prev, assignedToUserIds: currentIds.filter(id => id !== userId) };
+      } else {
+        return { ...prev, assignedToUserIds: [...currentIds, userId] };
+      }
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -177,6 +194,43 @@ const TaskForm = () => {
               onChange={handleChange}
               style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
             />
+          </div>
+
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+              Atanan Kullanıcılar
+            </label>
+            <div style={{ 
+              border: '1px solid #ddd', 
+              borderRadius: '4px', 
+              padding: '10px', 
+              maxHeight: '150px', 
+              overflowY: 'auto' 
+            }}>
+              {users.length === 0 ? (
+                <div style={{ color: '#6c757d', fontSize: '14px' }}>Kullanıcı yükleniyor...</div>
+              ) : (
+                users.map(user => (
+                  <label
+                    key={user.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '5px 0',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={(formData.assignedToUserIds || []).includes(user.id)}
+                      onChange={() => handleUserToggle(user.id)}
+                      style={{ marginRight: '8px', cursor: 'pointer' }}
+                    />
+                    <span>{user.fullName} ({user.email})</span>
+                  </label>
+                ))
+              )}
+            </div>
           </div>
 
           <div style={{ display: 'flex', gap: '10px' }}>
