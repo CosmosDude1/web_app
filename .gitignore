@@ -50,6 +50,9 @@ appsettings.Production.json
 *.db-shm
 *.db-wal
 
+# Uploads
+backend/TaskManagementAPI/uploads/
+
 # Logs
 logs/
 *.log
