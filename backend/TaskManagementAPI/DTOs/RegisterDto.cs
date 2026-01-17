@@ -17,6 +17,9 @@ namespace TaskManagementAPI.DTOs
         
         [Required]
         public string LastName { get; set; } = string.Empty;
+        
+        [Required]
+        public string Role { get; set; } = "User"; // Default: User, Options: Admin, Yönetici, User
     }
 }
 

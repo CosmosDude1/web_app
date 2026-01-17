@@ -101,6 +101,7 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
 
 // CORS configuration
 builder.Services.AddCors(options =>

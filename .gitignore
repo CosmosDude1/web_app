@@ -41,6 +41,7 @@ dist/
 Thumbs.db
 
 # App settings (sensitive)
+appsettings.json
 appsettings.Development.json
 appsettings.Production.json
 

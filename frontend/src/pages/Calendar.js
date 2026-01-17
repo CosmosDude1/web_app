@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { taskService } from '../services/taskService';
 import Navbar from '../components/Navbar';
+import { Link } from 'react-router-dom';
 
 const Calendar = () => {
   const [tasks, setTasks] = useState([]);
@@ -43,13 +44,13 @@ const Calendar = () => {
 
   const getStatusColor = (status) => {
     const colors = {
-      'ToDo': '#6c757d',
-      'InProgress': '#007bff',
-      'InReview': '#ffc107',
-      'Completed': '#28a745',
-      'Cancelled': '#dc3545'
+      'ToDo': 'var(--secondary)',
+      'InProgress': 'var(--info)',
+      'InReview': 'var(--warning)',
+      'Completed': 'var(--success)',
+      'Cancelled': 'var(--danger)'
     };
-    return colors[status] || '#6c757d';
+    return colors[status] || 'var(--secondary)';
   };
 
   const renderCalendar = () => {
@@ -65,12 +66,10 @@ const Calendar = () => {
     const days = [];
     const dayNames = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
 
-    // Boş hücreler (ayın ilk gününden önce)
     for (let i = 0; i < startingDayOfWeek; i++) {
-      days.push(<div key={`empty-${i}`} style={{ padding: '10px' }}></div>);
+      days.push(<div key={`empty-${i}`} style={{ padding: '10px', backgroundColor: 'var(--background)', opacity: 0.3 }}></div>);
     }
 
-    // Ayın günleri
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
       const dayTasks = getTasksForDate(date);
@@ -80,38 +79,61 @@ const Calendar = () => {
         <div
           key={day}
           style={{
-            border: '1px solid #ddd',
-            padding: '10px',
-            minHeight: '100px',
-            backgroundColor: isToday ? '#e3f2fd' : 'white'
+            border: '1px solid var(--border)',
+            padding: '12px',
+            minHeight: '120px',
+            backgroundColor: isToday ? 'rgba(99, 102, 241, 0.05)' : 'white',
+            transition: 'all 0.2s',
+            position: 'relative'
           }}
+          className="calendar-day"
         >
-          <div style={{ fontWeight: isToday ? 'bold' : 'normal', marginBottom: '5px' }}>
-            {day}
+          <div style={{ 
+            fontWeight: '700', 
+            fontSize: '0.9rem',
+            color: isToday ? 'var(--primary)' : 'var(--text-main)',
+            marginBottom: '8px',
+            display: 'flex',
+            justifyContent: 'space-between'
+          }}>
+            <span style={isToday ? { 
+              backgroundColor: 'var(--primary)', 
+              color: 'white', 
+              width: '24px', 
+              height: '24px', 
+              borderRadius: '50%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              fontSize: '0.75rem'
+            } : {}}>{day}</span>
           </div>
-          <div style={{ fontSize: '11px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {dayTasks.slice(0, 3).map(task => (
-              <div
+              <Link
+                to={`/tasks/${task.id}`}
                 key={task.id}
                 style={{
                   backgroundColor: getStatusColor(task.status),
                   color: 'white',
-                  padding: '2px 6px',
+                  padding: '2px 8px',
                   borderRadius: '4px',
-                  marginBottom: '2px',
                   fontSize: '10px',
+                  fontWeight: '600',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  textDecoration: 'none',
+                  display: 'block'
                 }}
                 title={task.title}
               >
                 {task.title}
-              </div>
+              </Link>
             ))}
             {dayTasks.length > 3 && (
-              <div style={{ fontSize: '10px', color: '#6c757d', marginTop: '2px' }}>
-                +{dayTasks.length - 3} daha
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: '600', textAlign: 'center', marginTop: '2px' }}>
+                + {dayTasks.length - 3} görev daha
               </div>
             )}
           </div>
@@ -120,10 +142,18 @@ const Calendar = () => {
     }
 
     return (
-      <div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: '10px' }}>
+      <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid var(--border)' }}>
           {dayNames.map(day => (
-            <div key={day} style={{ padding: '10px', fontWeight: 'bold', textAlign: 'center', backgroundColor: '#f8f9fa' }}>
+            <div key={day} style={{ 
+              padding: '12px', 
+              fontWeight: '700', 
+              textAlign: 'center', 
+              backgroundColor: 'var(--background)',
+              color: 'var(--text-muted)',
+              fontSize: '0.75rem',
+              textTransform: 'uppercase'
+            }}>
               {day}
             </div>
           ))}
@@ -145,7 +175,9 @@ const Calendar = () => {
     return (
       <>
         <Navbar />
-        <div style={{ padding: '20px' }}>Yükleniyor...</div>
+        <div className="container" style={{ textAlign: 'center', paddingTop: '100px' }}>
+          <div style={{ border: '4px solid var(--border)', borderTop: '4px solid var(--primary)', borderRadius: '50%', width: '40px', height: '40px', animation: 'spin 1s linear infinite', margin: '0 auto' }}></div>
+        </div>
       </>
     );
   }
@@ -161,102 +193,78 @@ const Calendar = () => {
   return (
     <>
       <Navbar />
-      <div style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h1>Takvim</h1>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <button
-              onClick={() => changeMonth(-1)}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              ← Önceki Ay
-            </button>
-            <h2 style={{ margin: 0, minWidth: '200px', textAlign: 'center' }}>
+      <div className="container animate-fade-in" style={{ maxWidth: '1200px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: '1.875rem' }}>Takvim</h1>
+            <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Görevlerin zaman planlamasını takip et.</p>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', backgroundColor: 'var(--card-bg)', padding: '0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+            <button onClick={() => changeMonth(-1)} className="btn" style={{ padding: '0.5rem', minWidth: '40px', backgroundColor: 'var(--background)' }}>←</button>
+            <h3 style={{ margin: 0, minWidth: '150px', textAlign: 'center', fontSize: '1.1rem' }}>
               {monthName} {year}
-            </h2>
-            <button
-              onClick={() => changeMonth(1)}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Sonraki Ay →
-            </button>
+            </h3>
+            <button onClick={() => changeMonth(1)} className="btn" style={{ padding: '0.5rem', minWidth: '40px', backgroundColor: 'var(--background)' }}>→</button>
           </div>
         </div>
 
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ marginRight: '10px' }}>Tarih Seç:</label>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ddd' }}
-          />
-        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: '2rem', alignItems: 'start' }}>
+          <div className="card" style={{ padding: '1.5rem' }}>
+            {error && <div style={{ color: 'var(--danger)', marginBottom: '1.5rem' }}>{error}</div>}
+            {renderCalendar()}
+          </div>
 
-        {error && <div style={{ color: 'red', marginBottom: '15px' }}>{error}</div>}
-
-        <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-          {renderCalendar()}
-        </div>
-
-        <div style={{ marginTop: '30px' }}>
-          <h3>Görev Listesi</h3>
-          {tasks.length === 0 ? (
-            <div style={{ color: '#6c757d' }}>Seçili tarih aralığında görev yok.</div>
-          ) : (
-            <div style={{ display: 'grid', gap: '10px' }}>
-              {tasks.map(task => (
-                <div
-                  key={task.id}
-                  style={{
-                    border: '1px solid #ddd',
-                    borderRadius: '8px',
-                    padding: '15px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: 'bold' }}>{task.title}</div>
-                    <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                      {new Date(task.startDate).toLocaleDateString('tr-TR')} - {task.dueDate ? new Date(task.dueDate).toLocaleDateString('tr-TR') : 'Bitiş tarihi yok'}
-                    </div>
-                  </div>
-                  <span
-                    style={{
-                      padding: '4px 12px',
-                      borderRadius: '12px',
-                      backgroundColor: getStatusColor(task.status),
-                      color: 'white',
-                      fontSize: '12px'
-                    }}
-                  >
-                    {task.status}
-                  </span>
-                </div>
-              ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div className="card">
+              <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>Tarih Seç</h3>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                style={{ marginBottom: '0.5rem' }}
+              />
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Hızlıca bir tarihe gitmek için seçin.</p>
             </div>
-          )}
+
+            <div className="card" style={{ padding: 0 }}>
+              <div style={{ padding: '1.25rem', borderBottom: '1px solid var(--border)' }}>
+                <h3 style={{ fontSize: '1rem', margin: 0 }}>Aylık Liste</h3>
+              </div>
+              <div style={{ maxHeight: '500px', overflowY: 'auto', padding: '0.5rem' }}>
+                {tasks.length === 0 ? (
+                  <p style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.875rem' }}>Bu ay görev yok.</p>
+                ) : (
+                  tasks.map(task => (
+                    <div key={task.id} style={{ 
+                      padding: '1rem', 
+                      borderRadius: 'var(--radius-sm)',
+                      marginBottom: '0.5rem',
+                      transition: 'all 0.2s'
+                    }} className="hover-item">
+                      <Link to={`/tasks/${task.id}`} style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '0.875rem', display: 'block', marginBottom: '4px' }}>
+                        {task.title}
+                      </Link>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                          {new Date(task.startDate).toLocaleDateString('tr-TR')}
+                        </span>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: getStatusColor(task.status) }}></div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+      <style>{`
+        .calendar-day:hover { transform: scale(1.02); z-index: 10; box-shadow: var(--shadow-lg); border-color: var(--primary) !important; cursor: pointer; }
+        .hover-item:hover { background-color: var(--background); }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      `}</style>
     </>
   );
 };
 
 export default Calendar;
-

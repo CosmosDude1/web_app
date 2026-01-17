@@ -55,19 +55,38 @@ namespace TaskManagementAPI.Controllers
                 return BadRequest(result.Errors);
             }
 
-            // Assign default role
+            // Assign role
+            var roleToAssign = model.Role ?? "User";
+            var validRoles = new[] { "Admin", "Yönetici", "User" };
+            
+            if (!validRoles.Contains(roleToAssign))
+            {
+                roleToAssign = "User"; // Default to User if invalid role
+            }
+
             try
             {
-                if (await _roleManager.RoleExistsAsync("User"))
+                if (await _roleManager.RoleExistsAsync(roleToAssign))
                 {
-                    await _userManager.AddToRoleAsync(user, "User");
+                    await _userManager.AddToRoleAsync(user, roleToAssign);
+                }
+                else
+                {
+                    // If role doesn't exist, assign User as fallback
+                    if (await _roleManager.RoleExistsAsync("User"))
+                    {
+                        await _userManager.AddToRoleAsync(user, "User");
+                        roleToAssign = "User";
+                    }
                 }
             }
             catch
             {
                 // Role assignment failed, but user is created
+                roleToAssign = "User";
             }
 
+            var roles = await _userManager.GetRolesAsync(user);
             var token = GenerateJwtToken(user);
 
             return Ok(new AuthResponseDto
@@ -76,7 +95,7 @@ namespace TaskManagementAPI.Controllers
                 Email = user.Email!,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
-                Roles = new List<string> { "User" }
+                Roles = roles.ToList()
             });
         }
 
@@ -151,7 +170,7 @@ namespace TaskManagementAPI.Controllers
         }
 
         [HttpGet("users")]
-        [Authorize]
+        [Authorize(Roles = "Admin,Yönetici")]
         public async Task<ActionResult<IEnumerable<object>>> GetUsers()
         {
             var users = _userManager.Users

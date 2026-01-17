@@ -1,27 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { taskService } from '../services/taskService';
 import { attachmentService } from '../services/attachmentService';
+import { activityLogService } from '../services/activityLogService';
+import { useAuth } from '../context/AuthContext';
+import { getUserIdFromToken } from '../utils/jwt';
 import FileUpload from '../components/FileUpload';
 import Navbar from '../components/Navbar';
 
 const TaskDetail = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const [task, setTask] = useState(null);
   const [attachments, setAttachments] = useState([]);
+  const [activityLogs, setActivityLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const isAdmin = user?.roles?.includes('Admin');
+  const isManager = user?.roles?.includes('Yönetici');
+  const canEditTask = isAdmin || isManager;
+  const userId = getUserIdFromToken();
+  const isAssignedToUser = task?.assignedToUserIds?.includes(userId) || false;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [taskData, attachmentsData] = await Promise.all([
+        const [taskData, attachmentsData, activityData] = await Promise.all([
           taskService.getById(id),
-          attachmentService.getByTaskId(id).catch(() => [])
+          attachmentService.getByTaskId(id).catch(() => []),
+          activityLogService.getByTask(id).catch(() => [])
         ]);
         setTask(taskData);
         setAttachments(attachmentsData);
+        setActivityLogs(activityData);
       } catch (err) {
         setError('Görev yüklenirken hata oluştu');
         console.error(err);
@@ -70,51 +82,38 @@ const TaskDetail = () => {
     }
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      'ToDo': '#6c757d',
-      'InProgress': '#007bff',
-      'InReview': '#ffc107',
-      'Completed': '#28a745',
-      'Cancelled': '#dc3545'
-    };
-    return colors[status] || '#6c757d';
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'ToDo': return <span className="badge">Yapılacak</span>;
+      case 'InProgress': return <span className="badge badge-info">Devam Ediyor</span>;
+      case 'InReview': return <span className="badge badge-warning">İncelemede</span>;
+      case 'Completed': return <span className="badge badge-success">Tamamlandı</span>;
+      case 'Cancelled': return <span className="badge badge-danger">İptal</span>;
+      default: return <span className="badge">{status}</span>;
+    }
   };
 
-  const getStatusText = (status) => {
-    const texts = {
-      'ToDo': 'Yapılacak',
-      'InProgress': 'Devam Ediyor',
-      'InReview': 'İncelemede',
-      'Completed': 'Tamamlandı',
-      'Cancelled': 'İptal Edildi'
-    };
-    return texts[status] || status;
-  };
-
-  const getPriorityColor = (priority) => {
-    const colors = {
-      'Low': '#28a745',
-      'Medium': '#ffc107',
-      'High': '#fd7e14',
-      'Critical': '#dc3545'
-    };
-    return colors[priority] || '#6c757d';
-  };
-
-  const getPriorityText = (priority) => {
-    const texts = {
-      'Low': 'Düşük',
-      'Medium': 'Orta',
-      'High': 'Yüksek',
-      'Critical': 'Kritik'
-    };
-    return texts[priority] || priority;
+  const getPriorityBadge = (priority) => {
+    switch (priority) {
+      case 'Low': return <span className="badge badge-success">Düşük</span>;
+      case 'Medium': return <span className="badge badge-warning">Orta</span>;
+      case 'High': return <span className="badge badge-danger">Yüksek</span>;
+      case 'Critical': return <span className="badge badge-danger" style={{ border: '2px solid red' }}>KRİTİK</span>;
+      default: return <span className="badge">{priority}</span>;
+    }
   };
 
   const handleStatusChange = async (newStatus) => {
     try {
-      await taskService.update(id, { ...task, status: newStatus });
+      if (!canEditTask) {
+        await taskService.update(id, { 
+          ...task, 
+          status: newStatus,
+          assignedToUserIds: task.assignedToUserIds || []
+        });
+      } else {
+        await taskService.update(id, { ...task, status: newStatus });
+      }
       setTask({ ...task, status: newStatus });
     } catch (err) {
       alert('Durum güncellenirken hata oluştu');
@@ -125,18 +124,8 @@ const TaskDetail = () => {
     return (
       <>
         <Navbar />
-        <div style={{ padding: '20px' }}>Yükleniyor...</div>
-      </>
-    );
-  }
-
-  if (error || !task) {
-    return (
-      <>
-        <Navbar />
-        <div style={{ padding: '20px' }}>
-          <div style={{ color: 'red' }}>{error || 'Görev bulunamadı'}</div>
-          <Link to="/tasks">Görevlere Dön</Link>
+        <div className="container" style={{ textAlign: 'center', paddingTop: '100px' }}>
+          <div style={{ border: '4px solid var(--border)', borderTop: '4px solid var(--primary)', borderRadius: '50%', width: '40px', height: '40px', animation: 'spin 1s linear infinite', margin: '0 auto' }}></div>
         </div>
       </>
     );
@@ -145,176 +134,194 @@ const TaskDetail = () => {
   return (
     <>
       <Navbar />
-      <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h1>{task.title}</h1>
-          <Link
-            to={`/tasks/${id}/edit`}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '4px'
-            }}
-          >
-            Düzenle
-          </Link>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '30px' }}>
-          <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px' }}>
-            <h3>Görev Detayları</h3>
-            {task.description && (
-              <p style={{ marginBottom: '15px', whiteSpace: 'pre-wrap' }}>{task.description}</p>
-            )}
-            <div style={{ fontSize: '14px', color: '#6c757d' }}>
-              <div style={{ marginBottom: '10px' }}>
-                <strong>Proje:</strong> <Link to={`/projects/${task.projectId}`}>{task.projectName}</Link>
-              </div>
-              <div style={{ marginBottom: '10px' }}>
-                <strong>Başlangıç Tarihi:</strong> {new Date(task.startDate).toLocaleDateString('tr-TR')}
-              </div>
-              {task.dueDate && (
-                <div style={{ marginBottom: '10px' }}>
-                  <strong>Bitiş Tarihi:</strong> {new Date(task.dueDate).toLocaleDateString('tr-TR')}
-                </div>
-              )}
-              <div style={{ marginBottom: '10px' }}>
-                <strong>Oluşturan:</strong> {task.createdByUserName}
-              </div>
-              {task.assignedToUserNames && task.assignedToUserNames.length > 0 && (
-                <div style={{ marginBottom: '10px' }}>
-                  <strong>Atananlar:</strong> {task.assignedToUserNames.join(', ')}
-                </div>
-              )}
+      <div className="container animate-fade-in">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+          <div>
+            <Link to="/tasks" style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '0.5rem' }}>
+              ← Görev Listesi
+            </Link>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <h1 style={{ margin: 0, fontSize: '2rem' }}>{task.title}</h1>
+              {getPriorityBadge(task.priority)}
             </div>
           </div>
-
-          <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px' }}>
-            <h3>Durum ve Öncelik</h3>
-            <div style={{ marginBottom: '15px' }}>
-              <div style={{ marginBottom: '10px' }}>
-                <strong>Durum:</strong>
-                <div style={{ marginTop: '5px' }}>
-                  <span
-                    style={{
-                      padding: '6px 16px',
-                      borderRadius: '12px',
-                      backgroundColor: getStatusColor(task.status),
-                      color: 'white',
-                      fontSize: '14px',
-                      display: 'inline-block'
-                    }}
-                  >
-                    {getStatusText(task.status)}
-                  </span>
-                </div>
-                <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                  {['ToDo', 'InProgress', 'InReview', 'Completed'].map(status => (
-                    <button
-                      key={status}
-                      onClick={() => handleStatusChange(status)}
-                      disabled={task.status === status}
-                      style={{
-                        padding: '5px 10px',
-                        fontSize: '12px',
-                        backgroundColor: task.status === status ? getStatusColor(status) : '#e9ecef',
-                        color: task.status === status ? 'white' : '#495057',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: task.status === status ? 'not-allowed' : 'pointer'
-                      }}
-                    >
-                      {getStatusText(status)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <strong>Öncelik:</strong>
-                <div style={{ marginTop: '5px' }}>
-                  <span
-                    style={{
-                      padding: '6px 16px',
-                      borderRadius: '12px',
-                      backgroundColor: getPriorityColor(task.priority),
-                      color: 'white',
-                      fontSize: '14px',
-                      display: 'inline-block'
-                    }}
-                  >
-                    {getPriorityText(task.priority)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div style={{ marginTop: '30px' }}>
-          <h3>Dosyalar</h3>
-          <FileUpload taskId={id} onUploadSuccess={handleUploadSuccess} />
-          
-          {attachments.length > 0 && (
-            <div style={{ marginTop: '20px' }}>
-              <div style={{ display: 'grid', gap: '10px' }}>
-                {attachments.map(attachment => (
-                  <div
-                    key={attachment.id}
-                    style={{
-                      border: '1px solid #ddd',
-                      borderRadius: '8px',
-                      padding: '15px',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontWeight: 'bold' }}>{attachment.fileName}</div>
-                      <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                        Yüklenme: {new Date(attachment.uploadedAt).toLocaleDateString('tr-TR')}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <button
-                        onClick={() => handleDownload(attachment.id, attachment.fileName)}
-                        style={{
-                          padding: '5px 15px',
-                          backgroundColor: '#007bff',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        İndir
-                      </button>
-                      <button
-                        onClick={() => handleDelete(attachment.id)}
-                        style={{
-                          padding: '5px 15px',
-                          backgroundColor: '#dc3545',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Sil
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {canEditTask && (
+            <Link to={`/tasks/${id}/edit`} className="btn btn-primary">Düzenle</Link>
           )}
         </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr', gap: '2rem' }}>
+          <div>
+            <div className="card" style={{ marginBottom: '2rem' }}>
+              <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>Açıklama</h3>
+              <p style={{ whiteSpace: 'pre-wrap', color: 'var(--text-main)', lineHeight: '1.7' }}>
+                {task.description || 'Bu görev için bir açıklama girilmemiş.'}
+              </p>
+            </div>
+
+            <div className="card">
+              <h3 style={{ fontSize: '1.125rem', marginBottom: '1.5rem' }}>Dosyalar</h3>
+              {(canEditTask || isAssignedToUser) && (
+                <div style={{ backgroundColor: 'var(--background)', padding: '1.5rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
+                  <FileUpload taskId={id} onUploadSuccess={handleUploadSuccess} />
+                </div>
+              )}
+              
+              <div style={{ display: 'grid', gap: '1rem' }}>
+                {attachments.length > 0 ? (
+                  attachments.map(attachment => (
+                    <div key={attachment.id} style={{ 
+                      padding: '1rem', 
+                      borderRadius: 'var(--radius-sm)', 
+                      border: '1px solid var(--border)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      transition: 'background 0.2s'
+                    }} className="hover-item">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ fontSize: '1.5rem' }}>📄</div>
+                        <div>
+                          <div style={{ fontWeight: '600', fontSize: '0.9rem' }}>{attachment.fileName}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {new Date(attachment.uploadedAt).toLocaleDateString('tr-TR')}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button onClick={() => handleDownload(attachment.id, attachment.fileName)} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}>İndir</button>
+                        <button onClick={() => handleDelete(attachment.id)} className="btn btn-danger" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}>Sil</button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', border: '2px dashed var(--border)', borderRadius: 'var(--radius-md)' }}>
+                    Henüz dosya yüklenmemiş.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div className="card">
+              <h3 style={{ fontSize: '1.125rem', marginBottom: '1.25rem' }}>Görev Durumu</h3>
+              <div style={{ marginBottom: '1.5rem' }}>
+                {getStatusBadge(task.status)}
+              </div>
+              
+              {(canEditTask || isAssignedToUser) && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>Durumu Güncelle</label>
+                  <div style={{ display: 'grid', gap: '0.5rem' }}>
+                    {[
+                      { id: 'ToDo', label: 'Yapılacak' },
+                      { id: 'InProgress', label: 'Devam Ediyor' },
+                      { id: 'InReview', label: 'İncelemede' },
+                      { id: 'Completed', label: 'Tamamlandı' }
+                    ].map(status => (
+                      <button
+                        key={status.id}
+                        onClick={() => handleStatusChange(status.id)}
+                        className="btn"
+                        style={{
+                          backgroundColor: task.status === status.id ? 'var(--primary)' : 'var(--background)',
+                          color: task.status === status.id ? 'white' : 'var(--text-main)',
+                          border: task.status === status.id ? 'none' : '1px solid var(--border)',
+                          justifyContent: 'flex-start',
+                          padding: '0.75rem 1rem'
+                        }}
+                        disabled={task.status === status.id}
+                      >
+                        {status.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="card">
+              <h3 style={{ fontSize: '1.125rem', marginBottom: '1.25rem' }}>Detaylar</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Proje:</span>
+                  <Link to={`/projects/${task.projectId}`} style={{ fontWeight: '600' }}>{task.projectName}</Link>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Bitiş:</span>
+                  <span style={{ fontWeight: '600' }}>{task.dueDate ? new Date(task.dueDate).toLocaleDateString('tr-TR') : '-'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Oluşturan:</span>
+                  <span style={{ fontWeight: '600' }}>{task.createdByUserName}</span>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>Atananlar</label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {task.assignedToUserNames && task.assignedToUserNames.length > 0 ? (
+                    task.assignedToUserNames.map((name, i) => (
+                      <div key={i} style={{ 
+                        display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 12px 4px 4px', 
+                        backgroundColor: 'var(--background)', borderRadius: '999px', fontSize: '0.8rem', border: '1px solid var(--border)' 
+                      }}>
+                        <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem' }}>
+                          {name.charAt(0)}
+                        </div>
+                        {name}
+                      </div>
+                    ))
+                  ) : (
+                    <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Kimse atanmamış.</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Aktivite Geçmişi */}
+        <div className="card" style={{ marginTop: '2rem', padding: 0 }}>
+          <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)' }}>
+            <h3 style={{ fontSize: '1.125rem', margin: 0 }}>Aktivite Geçmişi</h3>
+          </div>
+          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+            {activityLogs.length > 0 ? (
+              activityLogs.map(log => (
+                <div key={log.id} style={{ 
+                  padding: '1rem 1.5rem', borderBottom: '1px solid var(--border)', 
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                }}>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--background)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>👤</div>
+                    <div>
+                      <p style={{ fontSize: '0.9rem', margin: 0 }}>
+                        <span style={{ fontWeight: '600' }}>{log.userName}</span> {log.description}
+                      </p>
+                      <span className="badge" style={{ fontSize: '0.65rem', padding: '2px 6px', marginTop: '4px', display: 'inline-block', backgroundColor: 'var(--background)', color: 'var(--text-muted)' }}>
+                        {log.action.toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    {new Date(log.createdAt).toLocaleString('tr-TR')}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Henüz aktivite kaydı yok.</p>
+            )}
+          </div>
+        </div>
       </div>
+      <style>{`
+        .hover-item:hover { background-color: var(--background); }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      `}</style>
     </>
   );
 };
 
 export default TaskDetail;
-

@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { projectService } from '../services/projectService';
+import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 
 const Projects = () => {
+  const { user } = useAuth();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const isAdmin = user?.roles?.includes('Admin');
+  const isManager = user?.roles?.includes('Yönetici');
+  const canCreateProject = isAdmin || isManager;
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -24,33 +30,24 @@ const Projects = () => {
     fetchProjects();
   }, []);
 
-  const getStatusColor = (status) => {
-    const colors = {
-      'NotStarted': '#6c757d',
-      'InProgress': '#007bff',
-      'Completed': '#28a745',
-      'OnHold': '#ffc107',
-      'Cancelled': '#dc3545'
-    };
-    return colors[status] || '#6c757d';
-  };
-
-  const getStatusText = (status) => {
-    const texts = {
-      'NotStarted': 'Başlamadı',
-      'InProgress': 'Devam Ediyor',
-      'Completed': 'Tamamlandı',
-      'OnHold': 'Beklemede',
-      'Cancelled': 'İptal Edildi'
-    };
-    return texts[status] || status;
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'NotStarted': return <span className="badge">Başlamadı</span>;
+      case 'InProgress': return <span className="badge badge-info">Devam Ediyor</span>;
+      case 'Completed': return <span className="badge badge-success">Tamamlandı</span>;
+      case 'OnHold': return <span className="badge badge-warning">Beklemede</span>;
+      case 'Cancelled': return <span className="badge badge-danger">İptal</span>;
+      default: return <span className="badge">{status}</span>;
+    }
   };
 
   if (loading) {
     return (
       <>
         <Navbar />
-        <div style={{ padding: '20px' }}>Yükleniyor...</div>
+        <div className="container" style={{ textAlign: 'center', paddingTop: '100px' }}>
+          <div style={{ border: '4px solid var(--border)', borderTop: '4px solid var(--primary)', borderRadius: '50%', width: '40px', height: '40px', animation: 'spin 1s linear infinite', margin: '0 auto' }}></div>
+        </div>
       </>
     );
   }
@@ -58,81 +55,91 @@ const Projects = () => {
   return (
     <>
       <Navbar />
-      <div style={{ padding: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h1>Projeler</h1>
-          <Link
-            to="/projects/new"
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '4px'
-            }}
-          >
-            + Yeni Proje
-          </Link>
+      <div className="container animate-fade-in">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: '1.875rem' }}>Projeler</h1>
+            <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Tüm projeleri buradan yönetebilirsin.</p>
+          </div>
+          {canCreateProject && (
+            <Link to="/projects/new" className="btn btn-primary">
+              <span style={{ fontSize: '1.2rem' }}>+</span> Yeni Proje Oluştur
+            </Link>
+          )}
         </div>
 
-        {error && <div style={{ color: 'red', marginBottom: '15px' }}>{error}</div>}
+        {error && (
+          <div style={{ backgroundColor: '#fee2e2', color: '#991b1b', padding: '1rem', borderRadius: 'var(--radius-sm)', marginBottom: '2rem' }}>
+            {error}
+          </div>
+        )}
 
         {projects.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#6c757d' }}>
-            Henüz proje yok. İlk projenizi oluşturun!
+          <div className="card" style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📁</div>
+            <h3>Henüz proje bulunmuyor</h3>
+            <p>Sisteme henüz hiç proje eklenmemiş.</p>
+            {canCreateProject && (
+              <Link to="/projects/new" className="btn btn-primary" style={{ marginTop: '1.5rem' }}>
+                İlk Projeyi Oluştur
+              </Link>
+            )}
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+          <div className="grid-4">
             {projects.map(project => (
-              <div
-                key={project.id}
-                style={{
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  padding: '20px',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '10px' }}>
-                  <h3 style={{ margin: 0 }}>
-                    <Link to={`/projects/${project.id}`} style={{ color: '#007bff', textDecoration: 'none' }}>
-                      {project.name}
-                    </Link>
-                  </h3>
-                  <span
-                    style={{
-                      padding: '4px 12px',
-                      borderRadius: '12px',
-                      backgroundColor: getStatusColor(project.status),
-                      color: 'white',
-                      fontSize: '12px'
-                    }}
-                  >
-                    {getStatusText(project.status)}
+              <div key={project.id} className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  {getStatusBadge(project.status)}
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '500' }}>
+                    ID: #{project.id}
                   </span>
                 </div>
+                
+                <h3 style={{ fontSize: '1.125rem', marginBottom: '0.75rem' }}>
+                  <Link to={`/projects/${project.id}`} style={{ color: 'var(--text-main)', textDecoration: 'none' }}>
+                    {project.name}
+                  </Link>
+                </h3>
+
                 {project.description && (
-                  <p style={{ color: '#6c757d', marginBottom: '10px', fontSize: '14px' }}>
-                    {project.description.length > 100
-                      ? `${project.description.substring(0, 100)}...`
+                  <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '0.875rem', flex: 1 }}>
+                    {project.description.length > 120
+                      ? `${project.description.substring(0, 120)}...`
                       : project.description}
                   </p>
                 )}
-                <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                  <div>Başlangıç: {new Date(project.startDate).toLocaleDateString('tr-TR')}</div>
-                  {project.endDate && (
-                    <div>Bitiş: {new Date(project.endDate).toLocaleDateString('tr-TR')}</div>
-                  )}
-                  <div>Oluşturan: {project.createdByUserName}</div>
+
+                <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Başlangıç:</span>
+                    <span style={{ fontWeight: '600' }}>{new Date(project.startDate).toLocaleDateString('tr-TR')}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Oluşturan:</span>
+                    <span style={{ fontWeight: '600' }}>{project.createdByUserName}</span>
+                  </div>
                 </div>
+
+                <Link to={`/projects/${project.id}`} className="btn" style={{ 
+                  marginTop: '1rem', 
+                  width: '100%', 
+                  backgroundColor: 'var(--background)',
+                  color: 'var(--text-main)',
+                  border: '1px solid var(--border)'
+                }}>
+                  Detayları Gör
+                </Link>
               </div>
             ))}
           </div>
         )}
       </div>
+      <style>{`
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      `}</style>
     </>
   );
 };
 
 export default Projects;
-

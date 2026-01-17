@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { taskService } from '../services/taskService';
+import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 
 const Tasks = () => {
+  const { user } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all');
+
+  const isAdmin = user?.roles?.includes('Admin');
+  const isManager = user?.roles?.includes('Yönetici');
+  const canCreateTask = isAdmin || isManager;
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -25,46 +31,25 @@ const Tasks = () => {
     fetchTasks();
   }, []);
 
-  const getStatusColor = (status) => {
-    const colors = {
-      'ToDo': '#6c757d',
-      'InProgress': '#007bff',
-      'InReview': '#ffc107',
-      'Completed': '#28a745',
-      'Cancelled': '#dc3545'
-    };
-    return colors[status] || '#6c757d';
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'ToDo': return <span className="badge">Yapılacak</span>;
+      case 'InProgress': return <span className="badge badge-info">Devam Ediyor</span>;
+      case 'InReview': return <span className="badge badge-warning">İncelemede</span>;
+      case 'Completed': return <span className="badge badge-success">Tamamlandı</span>;
+      case 'Cancelled': return <span className="badge badge-danger">İptal</span>;
+      default: return <span className="badge">{status}</span>;
+    }
   };
 
-  const getStatusText = (status) => {
-    const texts = {
-      'ToDo': 'Yapılacak',
-      'InProgress': 'Devam Ediyor',
-      'InReview': 'İncelemede',
-      'Completed': 'Tamamlandı',
-      'Cancelled': 'İptal Edildi'
-    };
-    return texts[status] || status;
-  };
-
-  const getPriorityColor = (priority) => {
-    const colors = {
-      'Low': '#28a745',
-      'Medium': '#ffc107',
-      'High': '#fd7e14',
-      'Critical': '#dc3545'
-    };
-    return colors[priority] || '#6c757d';
-  };
-
-  const getPriorityText = (priority) => {
-    const texts = {
-      'Low': 'Düşük',
-      'Medium': 'Orta',
-      'High': 'Yüksek',
-      'Critical': 'Kritik'
-    };
-    return texts[priority] || priority;
+  const getPriorityBadge = (priority) => {
+    switch (priority) {
+      case 'Low': return <span style={{ color: 'var(--success)', fontWeight: '700', fontSize: '0.75rem' }}>● Düşük</span>;
+      case 'Medium': return <span style={{ color: 'var(--warning)', fontWeight: '700', fontSize: '0.75rem' }}>● Orta</span>;
+      case 'High': return <span style={{ color: 'var(--danger)', fontWeight: '700', fontSize: '0.75rem' }}>● Yüksek</span>;
+      case 'Critical': return <span style={{ color: 'var(--danger)', fontWeight: '800', fontSize: '0.75rem', textDecoration: 'underline' }}>● Kritik</span>;
+      default: return <span>{priority}</span>;
+    }
   };
 
   const filteredTasks = filter === 'all' 
@@ -75,7 +60,9 @@ const Tasks = () => {
     return (
       <>
         <Navbar />
-        <div style={{ padding: '20px' }}>Yükleniyor...</div>
+        <div className="container" style={{ textAlign: 'center', paddingTop: '100px' }}>
+          <div style={{ border: '4px solid var(--border)', borderTop: '4px solid var(--primary)', borderRadius: '50%', width: '40px', height: '40px', animation: 'spin 1s linear infinite', margin: '0 auto' }}></div>
+        </div>
       </>
     );
   }
@@ -83,157 +70,114 @@ const Tasks = () => {
   return (
     <>
       <Navbar />
-      <div style={{ padding: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h1>Görevler</h1>
-          <Link
-            to="/tasks/new"
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '4px'
-            }}
-          >
-            + Yeni Görev
-          </Link>
+      <div className="container animate-fade-in">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: '1.875rem' }}>Görevler</h1>
+            <p style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>Tüm görevleri ve durumlarını takip et.</p>
+          </div>
+          {canCreateTask && (
+            <Link to="/tasks/new" className="btn btn-primary">
+              + Yeni Görev
+            </Link>
+          )}
         </div>
 
-        <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
-          <button
-            onClick={() => setFilter('all')}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: filter === 'all' ? '#007bff' : '#6c757d',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Tümü
-          </button>
-          <button
-            onClick={() => setFilter('ToDo')}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: filter === 'ToDo' ? '#007bff' : '#6c757d',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Yapılacak
-          </button>
-          <button
-            onClick={() => setFilter('InProgress')}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: filter === 'InProgress' ? '#007bff' : '#6c757d',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Devam Eden
-          </button>
-          <button
-            onClick={() => setFilter('Completed')}
-            style={{
-              padding: '8px 16px',
-              backgroundColor: filter === 'Completed' ? '#007bff' : '#6c757d',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Tamamlanan
-          </button>
+        <div style={{ 
+          display: 'flex', 
+          gap: '0.5rem', 
+          marginBottom: '2rem', 
+          overflowX: 'auto', 
+          paddingBottom: '0.5rem',
+          borderBottom: '1px solid var(--border)'
+        }}>
+          {[
+            { id: 'all', label: 'Tümü' },
+            { id: 'ToDo', label: 'Yapılacak' },
+            { id: 'InProgress', label: 'Devam Eden' },
+            { id: 'InReview', label: 'İncelemede' },
+            { id: 'Completed', label: 'Tamamlanan' }
+          ].map(f => (
+            <button
+              key={f.id}
+              onClick={() => setFilter(f.id)}
+              style={{
+                padding: '0.5rem 1.25rem',
+                backgroundColor: filter === f.id ? 'var(--primary)' : 'transparent',
+                color: filter === f.id ? 'white' : 'var(--text-muted)',
+                border: 'none',
+                borderRadius: 'var(--radius-sm)',
+                cursor: 'pointer',
+                fontWeight: '600',
+                fontSize: '0.875rem',
+                transition: 'all 0.2s',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
 
-        {error && <div style={{ color: 'red', marginBottom: '15px' }}>{error}</div>}
+        {error && (
+          <div style={{ backgroundColor: '#fee2e2', color: '#991b1b', padding: '1rem', borderRadius: 'var(--radius-sm)', marginBottom: '2rem' }}>
+            {error}
+          </div>
+        )}
 
         {filteredTasks.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#6c757d' }}>
-            {filter === 'all' ? 'Henüz görev yok. İlk görevinizi oluşturun!' : 'Bu kategoride görev yok.'}
+          <div className="card" style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
+            <h3>Görev bulunamadı</h3>
+            <p>Seçili kriterlere uygun görev bulunmuyor.</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gap: '15px' }}>
-            {filteredTasks.map(task => (
-              <div
-                key={task.id}
-                style={{
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  padding: '20px',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '10px' }}>
-                  <div style={{ flex: 1 }}>
-                    <h3 style={{ margin: 0, marginBottom: '5px' }}>
-                      <Link to={`/tasks/${task.id}`} style={{ color: '#007bff', textDecoration: 'none' }}>
+          <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead style={{ backgroundColor: 'var(--background)', borderBottom: '1px solid var(--border)' }}>
+                <tr>
+                  <th style={{ padding: '1rem 1.5rem', fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Görev</th>
+                  <th style={{ padding: '1rem 1.5rem', fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Proje</th>
+                  <th style={{ padding: '1rem 1.5rem', fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Durum</th>
+                  <th style={{ padding: '1rem 1.5rem', fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Öncelik</th>
+                  <th style={{ padding: '1rem 1.5rem', fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Bitiş Tarihi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTasks.map(task => (
+                  <tr key={task.id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} className="table-row">
+                    <td style={{ padding: '1.25rem 1.5rem' }}>
+                      <Link to={`/tasks/${task.id}`} style={{ fontWeight: '600', color: 'var(--text-main)', display: 'block' }}>
                         {task.title}
                       </Link>
-                    </h3>
-                    <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '10px' }}>
-                      Proje: <Link to={`/projects/${task.projectId}`} style={{ color: '#007bff' }}>{task.projectName}</Link>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '10px', flexDirection: 'column', alignItems: 'flex-end' }}>
-                    <span
-                      style={{
-                        padding: '4px 12px',
-                        borderRadius: '12px',
-                        backgroundColor: getStatusColor(task.status),
-                        color: 'white',
-                        fontSize: '12px'
-                      }}
-                    >
-                      {getStatusText(task.status)}
-                    </span>
-                    <span
-                      style={{
-                        padding: '4px 12px',
-                        borderRadius: '12px',
-                        backgroundColor: getPriorityColor(task.priority),
-                        color: 'white',
-                        fontSize: '12px'
-                      }}
-                    >
-                      {getPriorityText(task.priority)}
-                    </span>
-                  </div>
-                </div>
-                {task.description && (
-                  <p style={{ color: '#6c757d', marginBottom: '10px', fontSize: '14px' }}>
-                    {task.description.length > 150
-                      ? `${task.description.substring(0, 150)}...`
-                      : task.description}
-                  </p>
-                )}
-                <div style={{ fontSize: '12px', color: '#6c757d', display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-                  <div>Başlangıç: {new Date(task.startDate).toLocaleDateString('tr-TR')}</div>
-                  {task.dueDate && (
-                    <div>Bitiş: {new Date(task.dueDate).toLocaleDateString('tr-TR')}</div>
-                  )}
-                  <div>Oluşturan: {task.createdByUserName}</div>
-                  {task.assignedToUserNames && task.assignedToUserNames.length > 0 && (
-                    <div>Atanan: {task.assignedToUserNames.join(', ')}</div>
-                  )}
-                </div>
-              </div>
-            ))}
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ID: #{task.id}</span>
+                    </td>
+                    <td style={{ padding: '1.25rem 1.5rem' }}>
+                      <Link to={`/projects/${task.projectId}`} style={{ color: 'var(--primary)', fontSize: '0.875rem' }}>
+                        {task.projectName}
+                      </Link>
+                    </td>
+                    <td style={{ padding: '1.25rem 1.5rem' }}>
+                      {getStatusBadge(task.status)}
+                    </td>
+                    <td style={{ padding: '1.25rem 1.5rem' }}>
+                      {getPriorityBadge(task.priority)}
+                    </td>
+                    <td style={{ padding: '1.25rem 1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                      {task.dueDate ? new Date(task.dueDate).toLocaleDateString('tr-TR') : '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
+      <style>{`
+        .table-row:hover { background-color: #f8fafc; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      `}</style>
     </>
   );
 };
 
 export default Tasks;
-
